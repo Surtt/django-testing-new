@@ -61,6 +61,6 @@ def test_logout_accepts_post_request(author_client, logout_url):
     assert '_auth_user_id' not in author_client.session
 
 
-def test_logout_accepts_get_request(client, logout_url):
+def test_logout_rejects_get_request(client, logout_url):
     response = client.get(logout_url)
     assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED

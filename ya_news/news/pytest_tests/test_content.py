@@ -1,14 +1,11 @@
-from django.conf import settings
-
 from news.forms import CommentForm
+
+from .constants import NEWS_ON_HOME_PAGE
 
 
 def test_news_count_on_home_page_is_limited(client, news_home_url, news_batch):
     response = client.get(news_home_url)
-    assert (
-        len(response.context['object_list'])
-        == settings.NEWS_COUNT_ON_HOME_PAGE
-    )
+    assert len(response.context['object_list']) == NEWS_ON_HOME_PAGE
 
 
 def test_news_are_ordered_from_newest_to_oldest(

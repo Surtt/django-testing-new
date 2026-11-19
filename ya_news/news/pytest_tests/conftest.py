@@ -1,15 +1,13 @@
 from datetime import timedelta
 
 import pytest
-from django.conf import settings
 from django.test import Client
 from django.urls import reverse
 from django.utils import timezone
 
 from news.models import Comment, News
 
-NEWS_LIMIT = getattr(settings, 'NEWS_COUNT_ON_HOME_PAGE', 10)
-COMMENTS_COUNT = 5
+from .constants import COMMENTS_COUNT, NEWS_ON_HOME_PAGE
 
 
 @pytest.fixture
@@ -63,7 +61,7 @@ def news_batch(db):
                 text=f'Текст новости {i}',
                 date=today + timedelta(days=i),
             )
-            for i in range(NEWS_LIMIT + 1)
+            for i in range(NEWS_ON_HOME_PAGE + 1)
         ]
     )
 
