@@ -61,7 +61,7 @@ def news_batch(db):
             News(
                 title=f'Новость {i}',
                 text=f'Текст новости {i}',
-                date=today - timedelta(days=i),
+                date=today + timedelta(days=i),
             )
             for i in range(NEWS_LIMIT + 1)
         ]
@@ -78,7 +78,7 @@ def comments(news, author, db):
             author=author,
             text=f'Комментарий {i}',
         )
-        item.created = now + timedelta(days=i)
+        item.created = now - timedelta(days=i)
         item.save()
         result.append(item)
     return result
