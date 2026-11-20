@@ -10,6 +10,11 @@ from news.models import Comment, News
 from .constants import COMMENTS_COUNT, NEWS_ON_HOME_PAGE
 
 
+@pytest.fixture(autouse=True)
+def enable_db_access(db):
+    """Доступ к тестовой базе для каждого теста."""
+
+
 @pytest.fixture
 def author(django_user_model, db):
     return django_user_model.objects.create(username='Автор комментария')
@@ -54,32 +59,26 @@ def comment(news, author, db):
 @pytest.fixture
 def news_batch(db):
     today = timezone.now().date()
-    return News.objects.bulk_create(
-        [
-            News(
-                title=f'Новость {i}',
-                text=f'Текст новости {i}',
-                date=today + timedelta(days=i),
-            )
-            for i in range(NEWS_ON_HOME_PAGE + 1)
-        ]
+    News.objects.bulk_create(
+        News(
+            title=f'Новость {i}',
+            text=f'Текст новости {i}',
+            date=today + timedelta(days=i),
+        )
+        for i in range(NEWS_ON_HOME_PAGE + 1)
     )
 
 
 @pytest.fixture
 def comments(news, author, db):
-    now = timezone.now()
-    result = []
-    for i in range(COMMENTS_COUNT):
-        item = Comment.objects.create(
+    return [
+        Comment.objects.create(
             news=news,
             author=author,
-            text=f'Комментарий {i}',
+            text=f'Комментарий {comment_index}',
         )
-        item.created = now - timedelta(days=i)
-        item.save()
-        result.append(item)
-    return result
+        for comment_index in range(COMMENTS_COUNT)
+    ]
 
 
 @pytest.fixture

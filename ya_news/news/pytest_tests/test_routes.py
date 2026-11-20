@@ -1,60 +1,49 @@
 from http import HTTPStatus
 
 import pytest
-from django.urls import reverse
 from pytest_django.asserts import assertRedirects
 
 
-@pytest.mark.django_db
-@pytest.mark.parametrize(
-    'name',
-    ('news:home', 'users:login', 'users:signup'),
-)
-def test_public_pages_are_accessible(client, name):
-    response = client.get(reverse(name))
-    assert response.status_code == HTTPStatus.OK
-
-
-def test_news_detail_page_is_accessible(client, news_detail_url):
-    response = client.get(news_detail_url)
-    assert response.status_code == HTTPStatus.OK
+COMMENT_URLS = ('comment_edit_url', 'comment_delete_url')
 
 
 @pytest.mark.parametrize(
-    'name',
-    ('news:edit', 'news:delete'),
+    'url_fixture_name',
+    ('news_home_url', 'news_detail_url', 'login_url', 'signup_url'),
 )
-def test_private_comment_pages_are_accessible_for_author(
-    comment, author_client, name
+def test_public_pages_are_accessible(client, request, url_fixture_name):
+    url = request.getfixturevalue(url_fixture_name)
+    response = client.get(url)
+    assert response.status_code == HTTPStatus.OK
+
+
+@pytest.mark.parametrize('url_fixture_name', COMMENT_URLS)
+@pytest.mark.parametrize(
+    'client_fixture_name, expected_status',
+    (
+        ('author_client', HTTPStatus.OK),
+        ('reader_client', HTTPStatus.NOT_FOUND),
+    ),
+)
+def test_comment_pages_access_by_user(
+    request, url_fixture_name, client_fixture_name, expected_status
 ):
-    url = reverse(name, args=(comment.pk,))
-    response = author_client.get(url)
-    assert response.status_code == HTTPStatus.OK
+    url = request.getfixturevalue(url_fixture_name)
+    user_client = request.getfixturevalue(client_fixture_name)
+    response = user_client.get(url)
+    assert response.status_code == expected_status
 
 
-@pytest.mark.parametrize(
-    'name',
-    ('news:edit', 'news:delete'),
-)
-def test_private_comment_pages_not_found_for_reader(
-    comment, reader_client, name
+@pytest.mark.parametrize('url_fixture_name', COMMENT_URLS)
+def test_anonymous_redirected_to_login(
+    client, request, login_url, url_fixture_name
 ):
-    url = reverse(name, args=(comment.pk,))
-    response = reader_client.get(url)
-    assert response.status_code == HTTPStatus.NOT_FOUND
-
-
-@pytest.mark.parametrize(
-    'name',
-    ('news:edit', 'news:delete'),
-)
-def test_anonymous_redirected_to_login(comment, client, login_url, name):
-    url = reverse(name, args=(comment.pk,))
+    url = request.getfixturevalue(url_fixture_name)
     response = client.get(url)
     assertRedirects(response, f'{login_url}?next={url}')
 
 
-def test_logout_accepts_post_request(author_client, logout_url):
+def test_logout_by_post_clears_session(author_client, logout_url):
     assert '_auth_user_id' in author_client.session
     response = author_client.post(logout_url)
     assert response.status_code == HTTPStatus.OK
